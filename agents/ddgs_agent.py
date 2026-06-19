@@ -16,10 +16,12 @@ def search_web(query):
             )
         return "\n".join(output)
 
-def news_agent(state):
+def ddgs_agent(state):
     company = state["company"]
-    query = f"{company} recent business news"
+    query = (f"{company} latest earnings"
+              f"AI partnerships acqisitions"
+              f"market developments")
     news = search_web(query)
     return{
-        "news": news
+        "ddgs_news": news
     }

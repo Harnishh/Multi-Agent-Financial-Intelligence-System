@@ -1,7 +1,7 @@
 from tools.llm import llm
 
 def filter_agent(state):
-    news = state["news"]
+    news = state["aggregated_news"]
     prompt = f"""
 You are a financial news analyst.
 
@@ -11,7 +11,7 @@ Your job:
 
 1. Remove duplicate information.
 2. Ignore navigation pages.
-3. Ignote investor relation pages.
+3. Ignore investor relation pages.
 4. Ignore generic company profile pages.
 5. Extract only important business events.
 

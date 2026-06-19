@@ -3,7 +3,9 @@ from langgraph.graph import StateGraph, START, END
 from graph.state import FinancialState
 
 from agents.supervisor import supervisor
-from agents.news_agent import news_agent
+from agents.ddgs_agent import ddgs_agent
+from agents.rss_agent import rss_agent
+from agents.news_aggregator_agent import news_aggregator_agent
 from agents.filter_agent import filter_agent
 from agents.event_extraction_agent import event_extraction_agent
 from agents.risk_agent import risk_agent
@@ -16,25 +18,25 @@ def build_graph():
     builder = StateGraph(FinancialState)
 
     builder.add_node("supervisor", supervisor)
-    builder.add_node("news", news_agent)
-    builder.add_node("filter", filter_agent)
-    builder.add_node("event_extraction", event_extraction_agent)
-    builder.add_node("risk", risk_agent)
+    builder.add_node("ddgs", ddgs_agent)
+    builder.add_node("rss", rss_agent)
+    builder.add_node("aggregator", news_aggregator_agent)
     builder.add_node("sentiment", sentiment_agent)
     builder.add_node("report", report_agent)
+    builder.add_node("filter", filter_agent)
+    builder.add_node("risk", risk_agent)
+    builder.add_node("event", event_extraction_agent)
 
     builder.add_edge(START, "supervisor")
 
-    builder.add_edge("supervisor", "news")
-
-    builder.add_edge("news", "filter")
-
-    builder.add_edge("filter", "event_extraction")
-
-    builder.add_edge("event_extraction", "risk")
-
-    builder.add_edge("risk", "sentiment")
-
+    builder.add_edge("supervisor", "ddgs")
+    builder.add_edge("supervisor", "rss")
+    builder.add_edge("ddgs","aggregator")
+    builder.add_edge("rss","aggregator")
+    builder.add_edge("aggregator", "filter")
+    builder.add_edge("filter", "event")
+    builder.add_edge("event", "risk")
+    builder.add_edge("risk","sentiment")
     builder.add_edge("sentiment", "report")
 
     builder.add_edge("report", END)

@@ -1,6 +1,10 @@
-import streamlit as st
 
+import streamlit as st
 from graph.workflow import build_graph
+
+# =====================================================
+# PAGE CONFIG
+# =====================================================
 
 st.set_page_config(
     page_title="Financial Intelligence System",
@@ -10,69 +14,86 @@ st.set_page_config(
 
 graph = build_graph()
 
-# ----------------------------------
-# Header
-# ----------------------------------
+# =====================================================
+# HEADER
+# =====================================================
 
 st.title("📈 Multi-Agent Financial Intelligence System")
-st.subheader(
-    "🎬 System Walkthrough"
-)
 
-with open(
-    "Create_a_professional_se.mp4",
-    "rb"
-) as f:
+st.markdown("""
+AI-powered financial intelligence platform using:
 
-    st.video(f.read())
+- LangGraph
+- Gemini
+- DuckDuckGo Search
+- RSS Feeds
+- Streamlit
+""")
+
+st.markdown("""
+### Agent Workflow
+
+🧠 Supervisor Agent  
+🔍 DDGS Agent  
+📰 RSS Agent  
+🔗 News Aggregator Agent  
+🧹 Filter Agent  
+📊 Event Extraction Agent  
+⚠️ Risk Agent  
+😊 Sentiment Agent  
+📝 Report Agent
+""")
+
+# =====================================================
+# VIDEO SECTION
+# =====================================================
+
+try:
+    st.subheader("🎬 Project Architecture Overview")
+
+    with open("assets/project_demo.mp4", "rb") as video_file:
+        video_bytes = video_file.read()
+
+    st.video(video_bytes)
+
+except:
+    st.info("Place your video at: assets/project_demo.mp4")
 
 st.divider()
-st.markdown(
-    """
-    Analyze companies using a team of AI agents:
 
-    - Supervisor Agent
-    - News Agent
-    - Filter Agent
-    - Event Extraction Agent
-    - Risk Agent
-    - Sentiment Agent
-    - Report Agent
-    """
-)
-
-st.divider()
-
-# ----------------------------------
-# Input
-# ----------------------------------
+# =====================================================
+# INPUT
+# =====================================================
 
 company = st.text_input(
     "Enter Company Name",
-    placeholder="NVIDIA"
+    placeholder="Infosys"
 )
 
-# ----------------------------------
-# Analyze Button
-# ----------------------------------
+analyze = st.button(
+    "🚀 Analyze Company",
+    use_container_width=True
+)
 
-if st.button("🚀 Analyze", use_container_width=True):
+# =====================================================
+# ANALYSIS
+# =====================================================
 
-    if company.strip() == "":
+if analyze:
+
+    if not company.strip():
         st.warning("Please enter a company name.")
         st.stop()
 
-    # ----------------------------------
-    # Agent Status
-    # ----------------------------------
-
     with st.status(
-        "Running Multi-Agent Analysis...",
+        "Running Multi-Agent Workflow...",
         expanded=True
     ) as status:
 
         status.write("🧠 Supervisor Agent")
-        status.write("📰 News Agent")
+        status.write("🔍 DDGS Agent")
+        status.write("📰 RSS Agent")
+        status.write("🔗 News Aggregator Agent")
         status.write("🧹 Filter Agent")
         status.write("📊 Event Extraction Agent")
         status.write("⚠️ Risk Agent")
@@ -90,96 +111,152 @@ if st.button("🚀 Analyze", use_container_width=True):
             state="complete"
         )
 
-    # ----------------------------------
-    # Extract Data
-    # ----------------------------------
+    # =====================================================
+    # EXTRACT DATA
+    # =====================================================
 
-    events = result.get("events", [])
+    report = result.get("report", "")
+
+    sentiment = result.get("sentiment", "")
 
     risk_analysis = result.get(
         "risk_analysis",
-        "Not Available"
+        ""
     )
 
-    sentiment = result.get(
-        "sentiment",
-        "Not Available"
+    events = result.get(
+        "events",
+        []
     )
 
-    report = result.get(
-        "report",
-        "Not Available"
+    ddgs_news = result.get(
+        "ddgs_news",
+        ""
     )
 
-    # ----------------------------------
-    # Metrics
-    # ----------------------------------
+    rss_news = result.get(
+        "rss_news",
+        ""
+    )
+
+    filtered_news = result.get(
+        "filtered_news",
+        ""
+    )
+
+    # =====================================================
+    # METRICS
+    # =====================================================
 
     st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
-            "Events Found",
+            "Events Extracted",
             len(events)
         )
 
     with col2:
-        if "positive" in sentiment.lower():
+        st.metric(
+            "Agents",
+            "9"
+        )
+
+    with col3:
+        st.metric(
+            "News Sources",
+            "DDGS + RSS"
+        )
+
+    with col4:
+
+        sentiment_text = sentiment.lower()
+
+        if "positive" in sentiment_text:
             st.metric(
                 "Sentiment",
                 "Positive"
             )
-        elif "negative" in sentiment.lower():
+
+        elif "negative" in sentiment_text:
             st.metric(
                 "Sentiment",
                 "Negative"
             )
+
         else:
             st.metric(
                 "Sentiment",
                 "Neutral"
             )
 
-    with col3:
-        st.metric(
-            "Agents",
-            "7"
-        )
-
     st.divider()
 
-    # ----------------------------------
-    # Tabs
-    # ----------------------------------
+    # =====================================================
+    # TABS
+    # =====================================================
 
-    tab1, tab2, tab3, tab4 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
         [
             "📄 Report",
-            "📊 Events",
+            "📰 News Sources",
+            "📋 Events",
             "⚠️ Risk",
-            "🔍 Agent Data"
+            "😊 Sentiment",
+            "🤖 Agent Outputs"
         ]
     )
 
-    # ----------------------------------
-    # REPORT TAB
-    # ----------------------------------
+    # =====================================================
+    # REPORT
+    # =====================================================
 
     with tab1:
 
-        st.subheader("Financial Report")
+        st.subheader(
+            "Financial Intelligence Report"
+        )
 
         st.markdown(report)
 
-    # ----------------------------------
-    # EVENTS TAB
-    # ----------------------------------
+        st.download_button(
+            label="⬇ Download Report",
+            data=report,
+            file_name=f"{company}_report.md",
+            mime="text/plain"
+        )
+
+    # =====================================================
+    # NEWS
+    # =====================================================
 
     with tab2:
 
-        st.subheader("Extracted Events")
+        st.subheader(
+            "🔍 DDGS News"
+        )
+
+        st.text(ddgs_news)
+
+        st.divider()
+
+        st.subheader(
+            "📰 RSS News"
+        )
+
+        st.text(rss_news)
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
+
+    with tab3:
+
+        st.subheader(
+            "Extracted Business Events"
+        )
 
         if len(events) == 0:
 
@@ -206,47 +283,49 @@ if st.button("🚀 Analyze", use_container_width=True):
                     "Unknown"
                 )
 
-                if impact.lower() == "positive":
+                with st.container():
 
-                    st.success(
-                        f"""
-                        Event: {title}
+                    if impact.lower() == "positive":
 
-                        Category: {category}
+                        st.success(
+                            f"""
+                            **{title}**
 
-                        Impact: {impact}
-                        """
-                    )
+                            Category: {category}
 
-                elif impact.lower() == "negative":
+                            Impact: {impact}
+                            """
+                        )
 
-                    st.error(
-                        f"""
-                        Event: {title}
+                    elif impact.lower() == "negative":
 
-                        Category: {category}
+                        st.error(
+                            f"""
+                            **{title}**
 
-                        Impact: {impact}
-                        """
-                    )
+                            Category: {category}
 
-                else:
+                            Impact: {impact}
+                            """
+                        )
 
-                    st.info(
-                        f"""
-                        Event: {title}
+                    else:
 
-                        Category: {category}
+                        st.info(
+                            f"""
+                            **{title}**
 
-                        Impact: {impact}
-                        """
-                    )
+                            Category: {category}
 
-    # ----------------------------------
-    # RISK TAB
-    # ----------------------------------
+                            Impact: {impact}
+                            """
+                        )
 
-    with tab3:
+    # =====================================================
+    # RISK
+    # =====================================================
+
+    with tab4:
 
         st.subheader(
             "Risk Assessment"
@@ -256,19 +335,63 @@ if st.button("🚀 Analyze", use_container_width=True):
             risk_analysis
         )
 
-    # ----------------------------------
-    # DEBUG TAB
-    # ----------------------------------
+    # =====================================================
+    # SENTIMENT
+    # =====================================================
 
-    with tab4:
+    with tab5:
 
         st.subheader(
-            "Raw Agent Output"
+            "Sentiment Analysis"
         )
 
-        st.json(result)
-    st.download_button(
-        "Download Report",
-        report,
-        file_name=f"{company}_report.txt"
-    )
+        st.markdown(
+            sentiment
+        )
+
+    # =====================================================
+    # AGENTS
+    # =====================================================
+
+    with tab6:
+
+        with st.expander(
+            "🔍 DDGS Agent"
+        ):
+            st.write(ddgs_news)
+
+        with st.expander(
+            "📰 RSS Agent"
+        ):
+            st.write(rss_news)
+
+        with st.expander(
+            "🧹 Filter Agent"
+        ):
+            st.write(filtered_news)
+
+        with st.expander(
+            "📊 Event Extraction Agent"
+        ):
+            st.json(events)
+
+        with st.expander(
+            "⚠️ Risk Agent"
+        ):
+            st.write(risk_analysis)
+
+        with st.expander(
+            "😊 Sentiment Agent"
+        ):
+            st.write(sentiment)
+
+        with st.expander(
+            "📝 Report Agent"
+        ):
+            st.write(report)
+
+        with st.expander(
+            "🗂 Complete State"
+        ):
+            st.json(result)
+
