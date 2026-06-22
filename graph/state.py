@@ -8,6 +8,7 @@ class FinancialState(TypedDict):
     aggregated_news: str
     filtered_news: str
     events: list
+    company_data: dict
     risk_analysis: str
     sentiment: str
     report: str
