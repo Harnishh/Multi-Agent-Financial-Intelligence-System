@@ -16,7 +16,7 @@ News:
 Return:
 
 Overall Sentimetn:
-Reason:
+Reason: 
 """
     response = llm.invoke(prompt)
     return{

@@ -38,7 +38,8 @@ TICKER_MAP = {
     "eicher motors": "EICHERMOT.NS",
     "bajaj auto": "BAJAJAUTO.NS",
     "hero motocorp": "HEROMOTOCO.NS",
-    
+    "mrf": "MRF.NS",
+
     # Consumer Goods & Retail
     "hindustan unilever": "HINDUNILVR.NS",
     "itc": "ITC.NS",

@@ -46,7 +46,8 @@ st.markdown("""
 
 from market.nifty_tools import (
     get_nifty_index,
-    get_nifty_chart
+    get_nifty_chart,
+    get_market_leaders,
 )
 
 # =====================================================
@@ -163,31 +164,43 @@ except Exception as e:
         f"Unable to load chart: {e}"
     )
 
-st.subheader(
-    "🏆 Market Leaders"
-)
+gainers, losers = get_market_leaders()
 
-gainers_col, losers_col = st.columns(2)
+st.subheader("🏆 Market Leaders")
 
-with gainers_col:
+col1, col2 = st.columns(2)
 
-    st.info(
-        """
-        Top Gainers
+with col1:
 
-        Coming Soon
-        """
-    )
+    st.markdown("### 🟢 Top 5 Gainers")
 
-with losers_col:
+    for stock in gainers:
 
-    st.info(
-        """
-        Top Losers
+        st.success(
+            f"""
+**{stock['company']}**
 
-        Coming Soon
-        """
-    )
+₹{stock['price']}
+
+▲ {stock['change']}%
+"""
+        )
+
+with col2:
+
+    st.markdown("### 🔴 Top 5 Losers")
+
+    for stock in losers:
+
+        st.error(
+            f"""
+**{stock['company']}**
+
+₹{stock['price']}
+
+▼ {abs(stock['change'])}%
+"""
+        )
 
 # =====================================================
 # INPUT
