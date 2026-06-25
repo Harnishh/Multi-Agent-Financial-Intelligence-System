@@ -44,22 +44,150 @@ st.markdown("""
 📝 Report Agent
 """)
 
+from market.nifty_tools import (
+    get_nifty_index,
+    get_nifty_chart
+)
+
 # =====================================================
-# VIDEO SECTION
+# MARKET OVERVIEW
 # =====================================================
+
+st.header("📊 Market Overview")
 
 try:
-    st.subheader("🎬 Project Architecture Overview")
 
-    with open("assets/project_demo.mp4", "rb") as video_file:
-        video_bytes = video_file.read()
+    nifty_data = get_nifty_index()
 
-    st.video(video_bytes)
+    col1, col2, col3, col4 = st.columns(4)
 
-except:
-    st.info("Place your video at: assets/project_demo.mp4")
+    with col1:
 
-st.divider()
+        st.metric(
+            label="NIFTY 50",
+            value=f"{nifty_data['current']:,}",
+            delta=f"{nifty_data['change']} ({nifty_data['change_percent']}%)"
+        )
+
+    with col2:
+
+        st.metric(
+            label="Previous Close",
+            value=f"{nifty_data['previous']:,}"
+        )
+
+    with col3:
+
+        st.metric(
+            label="Market Status",
+            value="Open"
+        )
+
+    with col4:
+
+        if nifty_data["change"] >= 0:
+
+            st.metric(
+                label="Trend",
+                value="Bullish 📈"
+            )
+
+        else:
+
+            st.metric(
+                label="Trend",
+                value="Bearish 📉"
+            )
+
+except Exception as e:
+
+    st.warning(
+        f"Unable to fetch Nifty data: {e}"
+    )
+
+try:
+
+    st.subheader(
+        "📈 NIFTY 50 Trend"
+    )
+
+    chart_period = st.selectbox(
+        "Select Period",
+        [
+            "5d",
+            "1mo",
+            "3mo",
+            "6mo",
+            "1y"
+        ]
+    )
+
+    chart_data = get_nifty_chart(
+        chart_period
+    )
+
+    import plotly.graph_objects as go
+
+    close_prices = chart_data["Close"]
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=chart_data.index,
+            y=close_prices,
+            mode="lines",
+            name="NIFTY 50"
+        )
+    )
+
+    fig.update_layout(
+        height=500
+    )
+
+    fig.update_yaxes(
+        range=[
+            close_prices.min() * 0.998,
+            close_prices.max() * 1.002
+        ]
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+except Exception as e:
+
+    st.warning(
+        f"Unable to load chart: {e}"
+    )
+
+st.subheader(
+    "🏆 Market Leaders"
+)
+
+gainers_col, losers_col = st.columns(2)
+
+with gainers_col:
+
+    st.info(
+        """
+        Top Gainers
+
+        Coming Soon
+        """
+    )
+
+with losers_col:
+
+    st.info(
+        """
+        Top Losers
+
+        Coming Soon
+        """
+    )
 
 # =====================================================
 # INPUT
