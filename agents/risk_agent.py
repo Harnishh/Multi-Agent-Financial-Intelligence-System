@@ -1,41 +1,87 @@
 from tools.llm import llm
 
 def risk_agent(state):
-    events = state["events"]
+
     company = state["company"]
+    events = state["events"]
+
     prompt = f"""
-You are a senior financial risk analyst.
+You are an experienced Equity Research Analyst and Financial Risk Consultant.
 
-Analyze the following company {company} developments,
+Analyze the recent business events for the company: {company}.
 
-Identify:
+Your objective is to identify ONLY risks that are supported by the provided events.
+Do NOT invent risks or use outside knowledge.
 
-1. Business Risks
-2. Financial Risks
-3. Operational Risks
-4. Market Risks
+Evaluate the company across the following dimensions:
 
-Assign:
+1. Business Risk
+   - Competition
+   - Customer concentration
+   - Strategic execution
+   - Partnerships
+   - Expansion risks
+
+2. Financial Risk
+   - Revenue uncertainty
+   - Profitability concerns
+   - Cash flow
+   - Capital expenditure
+   - Debt or liquidity concerns (only if mentioned)
+
+3. Operational Risk
+   - Supply chain
+   - Workforce
+   - Technology
+   - Cybersecurity
+   - Execution challenges
+
+4. Market Risk
+   - Industry trends
+   - Macroeconomic factors
+   - Regulatory issues
+   - Investor sentiment
+   - Stock volatility
+
+For each category assign one level:
 
 LOW
-MEDEUM
+MEDIUM
 HIGH
 
-Return:
+Then provide:
 
-RISK SCORE: 0-100
+Overall Risk Score:
+(integer from 0 to 100)
 
-KEY RISKS:
+Risk Level:
+LOW
+MEDIUM
+HIGH
 
-RISK LEVEL:
+Key Risks:
+- Bullet points only
 
-JUSTIFICATION:
+Risk Summary:
+Explain in 5-8 concise sentences why the company received this risk score.
 
-Data:
+Important Rules:
+- Base the analysis ONLY on the supplied events.
+- If information is insufficient for a category, explicitly state:
+  "Insufficient evidence."
+- Be objective.
+- Do not give investment advice.
+- Do not recommend BUY or SELL.
 
+Company:
+{company}
+
+Recent Events:
 {events}
 """
+
     response = llm.invoke(prompt)
-    return{
+
+    return {
         "risk_analysis": response.text
     }

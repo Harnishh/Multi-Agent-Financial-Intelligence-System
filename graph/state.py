@@ -11,4 +11,5 @@ class FinancialState(TypedDict):
     company_data: dict
     risk_analysis: str
     sentiment: str
+    ml_prediction: dict
     report: str

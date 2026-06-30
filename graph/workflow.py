@@ -12,6 +12,7 @@ from agents.risk_agent import risk_agent
 from agents.sentiment_agent import sentiment_agent
 from agents.report_agent import report_agent
 from agents.yfinance_agent import yfinance_agent
+from agents.prediction_agent import prediction_agent
 
 
 def build_graph():
@@ -28,6 +29,7 @@ def build_graph():
     builder.add_node("filter", filter_agent)
     builder.add_node("risk", risk_agent)
     builder.add_node("event", event_extraction_agent)
+    builder.add_node("predictor", prediction_agent)
 
     builder.add_edge(START, "supervisor")
 
@@ -38,9 +40,11 @@ def build_graph():
     builder.add_edge("rss","aggregator")
     builder.add_edge("aggregator", "filter")
     builder.add_edge("filter", "event")
-    builder.add_edge("event", "risk")
-    builder.add_edge("risk","sentiment")
-    builder.add_edge("sentiment", "report")
+    builder.add_edge("event", "sentiment")
+    builder.add_edge("sentiment", "risk")
+    builder.add_edge("risk", "predictor")
+    builder.add_edge("predictor", "report")
+
 
     builder.add_edge("report", END)
 

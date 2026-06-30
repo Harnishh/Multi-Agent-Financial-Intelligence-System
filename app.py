@@ -1,538 +1,287 @@
-
 import streamlit as st
+import plotly.graph_objects as go
 from graph.workflow import build_graph
+from market.nifty_tools import get_nifty_index, get_nifty_chart, get_market_leaders
 
-# =====================================================
-# PAGE CONFIG
-# =====================================================
-
+# ===========================================
+# PAGE CONFIG & CSS
+# ===========================================
 st.set_page_config(
     page_title="Financial Intelligence System",
     page_icon="📈",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-graph = build_graph()
-
-# =====================================================
-# HEADER
-# =====================================================
-
-st.title("📈 Multi-Agent Financial Intelligence System")
-
-st.markdown("""
-AI-powered financial intelligence platform using:
-
-- LangGraph
-- Gemini
-- DuckDuckGo Search
-- RSS Feeds
-- Streamlit
-""")
-
-st.markdown("""
-### Agent Workflow
-
-🧠 Supervisor Agent  
-🔍 DDGS Agent  
-📰 RSS Agent  
-🔗 News Aggregator Agent  
-🧹 Filter Agent  
-📊 Event Extraction Agent  
-⚠️ Risk Agent  
-😊 Sentiment Agent  
-📝 Report Agent
-""")
-
-from market.nifty_tools import (
-    get_nifty_index,
-    get_nifty_chart,
-    get_market_leaders,
-)
-
-# =====================================================
-# MARKET OVERVIEW
-# =====================================================
-
-st.header("📊 Market Overview")
-
-try:
-
-    nifty_data = get_nifty_index()
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-
-        st.metric(
-            label="NIFTY 50",
-            value=f"{nifty_data['current']:,}",
-            delta=f"{nifty_data['change']} ({nifty_data['change_percent']}%)"
-        )
-
-    with col2:
-
-        st.metric(
-            label="Previous Close",
-            value=f"{nifty_data['previous']:,}"
-        )
-
-    with col3:
-
-        st.metric(
-            label="Market Status",
-            value="Open"
-        )
-
-    with col4:
-
-        if nifty_data["change"] >= 0:
-
-            st.metric(
-                label="Trend",
-                value="Bullish 📈"
-            )
-
-        else:
-
-            st.metric(
-                label="Trend",
-                value="Bearish 📉"
-            )
-
-except Exception as e:
-
-    st.warning(
-        f"Unable to fetch Nifty data: {e}"
-    )
-
-try:
-
-    st.subheader(
-        "📈 NIFTY 50 Trend"
-    )
-
-    chart_period = st.selectbox(
-        "Select Period",
-        [
-            "5d",
-            "1mo",
-            "3mo",
-            "6mo",
-            "1y"
-        ]
-    )
-
-    chart_data = get_nifty_chart(
-        chart_period
-    )
-
-    import plotly.graph_objects as go
-
-    close_prices = chart_data["Close"]
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=chart_data.index,
-            y=close_prices,
-            mode="lines",
-            name="NIFTY 50"
-        )
-    )
-
-    fig.update_layout(
-        height=500
-    )
-
-    fig.update_yaxes(
-        range=[
-            close_prices.min() * 0.998,
-            close_prices.max() * 1.002
-        ]
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-except Exception as e:
-
-    st.warning(
-        f"Unable to load chart: {e}"
-    )
-
-gainers, losers = get_market_leaders()
-
-st.subheader("🏆 Market Leaders")
-
-col1, col2 = st.columns(2)
-
-with col1:
-
-    st.markdown("### 🟢 Top 5 Gainers")
-
-    for stock in gainers:
-
-        st.success(
-            f"""
-**{stock['company']}**
-
-₹{stock['price']}
-
-▲ {stock['change']}%
-"""
-        )
-
-with col2:
-
-    st.markdown("### 🔴 Top 5 Losers")
-
-    for stock in losers:
-
-        st.error(
-            f"""
-**{stock['company']}**
-
-₹{stock['price']}
-
-▼ {abs(stock['change'])}%
-"""
-        )
-
-# =====================================================
-# INPUT
-# =====================================================
-
-company = st.text_input(
-    "Enter Company Name",
-    placeholder="Infosys"
-)
-
-analyze = st.button(
-    "🚀 Analyze Company",
-    use_container_width=True
-)
-
-# =====================================================
-# ANALYSIS
-# =====================================================
-
-if analyze:
-
-    if not company.strip():
-        st.warning("Please enter a company name.")
-        st.stop()
-
-    with st.status(
-        "Running Multi-Agent Workflow...",
-        expanded=True
-    ) as status:
-
-        status.write("🧠 Supervisor Agent")
-        status.write("🔍 DDGS Agent")
-        status.write("📰 RSS Agent")
-        status.write("🔗 News Aggregator Agent")
-        status.write("🧹 Filter Agent")
-        status.write("📊 Event Extraction Agent")
-        status.write("⚠️ Risk Agent")
-        status.write("😊 Sentiment Agent")
-        status.write("📝 Report Agent")
-
-        result = graph.invoke(
-            {
-                "query": company
-            }
-        )
-
-        status.update(
-            label="Analysis Complete",
-            state="complete"
-        )
-
-    # =====================================================
-    # EXTRACT DATA
-    # =====================================================
-
-    report = result.get("report", "")
-
-    sentiment = result.get("sentiment", "")
-
-    risk_analysis = result.get(
-        "risk_analysis",
-        ""
-    )
-
-    events = result.get(
-        "events",
-        []
-    )
-
-    ddgs_news = result.get(
-        "ddgs_news",
-        ""
-    )
-
-    rss_news = result.get(
-        "rss_news",
-        ""
-    )
-
-    filtered_news = result.get(
-        "filtered_news",
-        ""
-    )
-
-    # =====================================================
-    # METRICS
-    # =====================================================
+def load_css():
+    st.markdown("""
+    <style>
+    .main { background-color: #0E1117; }
+    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+    .metric-card { background: #161B22; padding: 15px; border-radius: 12px; border: 1px solid #30363D; box-shadow: 0px 2px 12px rgba(0,0,0,0.3); }
+    .big-title { font-size: 40px; font-weight: 700; color: white; }
+    .sub-title { color: #A5A5A5; font-size: 18px; margin-bottom: 20px; }
+    .section-title { font-size: 28px; font-weight: 600; margin-top: 15px; margin-bottom: 15px; }
+    .stock-card { padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+    .gainer { background: #16221A; border-left: 6px solid #00C853; }
+    .loser { background: #2A1A1A; border-left: 6px solid #FF5252; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ===========================================
+# DASHBOARD PAGE
+# ===========================================
+def render_dashboard():
+    st.markdown("<div class='big-title'>📈 Multi-Agent Financial Intelligence System</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub-title'>Enterprise-grade AI-powered Financial Analysis Platform</div>", unsafe_allow_html=True)
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Agents", "10", "Active")
+    c2.metric("News Sources", "RSS + DDGS")
+    c3.metric("Prediction", "LightGBM")
+    c4.metric("Market", "NSE")
+
+    st.divider()
+    st.markdown("<div class='section-title'>📊 Market Overview</div>", unsafe_allow_html=True)
+
+    try:
+        nifty = get_nifty_index()
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("NIFTY 50", f"{nifty['current']:,.2f}", f"{nifty['change']} ({nifty['change_percent']}%)")
+        col2.metric("Previous Close", f"{nifty['previous']:,.2f}")
+        col3.metric("Market Trend", "Bullish 📈" if nifty["change"] >= 0 else "Bearish 📉")
+        col4.metric("Market Sentiment", "Positive" if nifty["change"] >= 0 else "Negative")
+    except Exception as e:
+        st.warning(f"Unable to fetch NIFTY index data: {e}")
 
     st.divider()
 
-    col1, col2, col3, col4 = st.columns(4)
+    left, right = st.columns([2.3, 1])
+    
+    with left:
+        st.markdown("<div class='section-title'>📈 NIFTY 50 Performance</div>", unsafe_allow_html=True)
+        chart_period = st.select_slider("Time Period", options=["5d", "1mo", "3mo", "6mo", "1y"], value="1mo")
 
-    with col1:
-        st.metric(
-            "Events Extracted",
-            len(events)
-        )
-
-    with col2:
-        st.metric(
-            "Agents",
-            "9"
-        )
-
-    with col3:
-        st.metric(
-            "News Sources",
-            "DDGS + RSS"
-        )
-
-    with col4:
-
-        sentiment_text = sentiment.lower()
-
-        if "positive" in sentiment_text:
-            st.metric(
-                "Sentiment",
-                "Positive"
+        try:
+            chart = get_nifty_chart(chart_period)
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=chart.index, y=chart["Close"], mode="lines", fill="tozeroy",
+                line=dict(width=3, color="#00CC96"),
+                hovertemplate="<b>Date</b>: %{x}<br><b>Close</b>: %{y:.2f}<extra></extra>"
+            ))
+            fig.update_layout(
+                template="plotly_dark", height=500, margin=dict(l=15, r=15, t=20, b=15),
+                paper_bgcolor="#0E1117", plot_bgcolor="#0E1117", hovermode="x unified",
+                yaxis_title="Index", font=dict(size=13)
             )
+            fig.update_xaxes(showgrid=False, zeroline=False)
+            fig.update_yaxes(showgrid=True, gridcolor="rgba(255,255,255,0.08)", zeroline=False)
+            st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.warning(f"Unable to load chart data: {e}")
 
-        elif "negative" in sentiment_text:
-            st.metric(
-                "Sentiment",
-                "Negative"
-            )
+    with right:
+        st.markdown("<div class='section-title'>🏆 Market Leaders</div>", unsafe_allow_html=True)
+        try:
+            gainers, losers = get_market_leaders()
+            st.markdown("### 🟢 Top Gainers")
+            for stock in gainers:
+                st.markdown(f"""
+                <div class="stock-card gainer">
+                    <b>{stock['company']}</b><br>₹ {stock['price']}<br>
+                    <span style="color:#00E676">▲ {stock['change']}%</span>
+                </div>
+                """, unsafe_allow_html=True)
 
-        else:
-            st.metric(
-                "Sentiment",
-                "Neutral"
-            )
+            st.markdown("### 🔴 Top Losers")
+            for stock in losers:
+                st.markdown(f"""
+                <div class="stock-card loser">
+                    <b>{stock['company']}</b><br>₹ {stock['price']}<br>
+                    <span style="color:#FF5252">▼ {abs(stock['change'])}%</span>
+                </div>
+                """, unsafe_allow_html=True)
+        except Exception as e:
+            st.warning(f"Unable to load market leaders: {e}")
+
+# ===========================================
+# COMPANY ANALYSIS PAGE
+# ===========================================
+def render_company_analysis(graph):
+    st.markdown("<div class='big-title'>🏢 Company Intelligence</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub-title'>Analyze any company using our Multi-Agent Financial Intelligence Engine.</div>", unsafe_allow_html=True)
+
+    c1, c2 = st.columns([5, 1])
+    with c1:
+        company = st.text_input("", placeholder="Search company (e.g., Infosys, TCS, Reliance, NVIDIA...)")
+    with c2:
+        analyze = st.button("🚀 Analyze", use_container_width=True)
 
     st.divider()
 
-    # =====================================================
-    # TABS
-    # =====================================================
+    if analyze:
+        if not company.strip():
+            st.warning("Please enter a company name.")
+            return
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-        [
-            "📄 Report",
-            "📰 News Sources",
-            "📋 Events",
-            "⚠️ Risk",
-            "😊 Sentiment",
-            "🤖 Agent Outputs"
-        ]
-    )
+        with st.status("Running Financial Intelligence Pipeline...", expanded=True) as status:
+            st.write("🧠 Supervisor Agent initialized")
+            st.write("🔍 DDGS & 📰 RSS Agents gathering context")
+            st.write("📊 Event Extraction & ⚠ Risk Analysis running")
+            st.write("🤖 Prediction Agent computing metrics")
 
-    # =====================================================
-    # REPORT
-    # =====================================================
+            try:
+                result = graph.invoke({"query": company})
+                status.update(label="Analysis Complete", state="complete", expanded=False)
+            except Exception as e:
+                status.update(label="Analysis Failed", state="error")
+                st.error(f"Pipeline execution failed: {e}")
+                return
 
-    with tab1:
+        # Safely extract dictionary results
+        report = result.get("report", "No report generated.")
+        events = result.get("events", [])
+        sentiment = result.get("sentiment", "Neutral")
+        risk = result.get("risk_analysis", "No risk analysis available.")
+        prediction = result.get("ml_prediction", {})
+        ddgs_news = result.get("ddgs_news", "No DDGS news found.")
+        rss_news = result.get("rss_news", "No RSS news found.")
 
-        st.subheader(
-            "Financial Intelligence Report"
-        )
-
-        st.markdown(report)
-
-        st.download_button(
-            label="⬇ Download Report",
-            data=report,
-            file_name=f"{company}_report.md",
-            mime="text/plain"
-        )
-
-    # =====================================================
-    # NEWS
-    # =====================================================
-
-    with tab2:
-
-        st.subheader(
-            "🔍 DDGS News"
-        )
-
-        st.text(ddgs_news)
+        # Dashboard Output
+        st.markdown("## 📊 Company Dashboard")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Events", len(events))
+        
+        sent_label = "🟢 Positive" if "positive" in sentiment.lower() else "🔴 Negative" if "negative" in sentiment.lower() else "🟡 Neutral"
+        m2.metric("Sentiment", sent_label)
+        
+        m3.metric("Recommendation", prediction.get("recommendation", "N/A") if prediction else "N/A")
+        m4.metric("AI Engine", "Gemini")
 
         st.divider()
 
-        st.subheader(
-            "📰 RSS News"
-        )
+        # Prediction & Risk Columns
+        left, right = st.columns([1.2, 1])
+        with left:
+            st.markdown("## 🤖 AI Prediction")
+            if prediction:
+                p1, p2 = st.columns(2)
+                p1.metric("Current Price", f"₹ {prediction.get('current_price', 0)}")
+                p1.metric("Direction", prediction.get("direction", "-"))
+                p2.metric("Tomorrow", f"₹ {prediction.get('predicted_price', 0)}")
+                p2.metric("Confidence", f"{prediction.get('confidence', 0)}%")
+                st.metric("Expected Return", f"{prediction.get('predicted_return', 0)}%")
 
-        st.text(rss_news)
+                rec = prediction.get("recommendation", "")
+                if rec == "BUY":
+                    st.success(f"🟢 Recommendation : **{rec}**")
+                elif rec == "SELL":
+                    st.error(f"🔴 Recommendation : **{rec}**")
+                else:
+                    st.warning(f"🟡 Recommendation : **{rec}**")
+            else:
+                st.info("Prediction metrics unavailable.")
 
-    # =====================================================
-    # EVENTS
-    # =====================================================
+        with right:
+            st.markdown("## ⚠ Risk Summary")
+            st.markdown(risk)
 
-    with tab3:
+        st.divider()
 
-        st.subheader(
-            "Extracted Business Events"
-        )
+        # Deep Dive Tabs
+        st.markdown("## 📑 Financial Intelligence Report")
+        tab1, tab2, tab3, tab4 = st.tabs(["📄 Report", "📰 News", "📋 Events", "⚠ Risk & Sentiment"])
 
-        if len(events) == 0:
+        with tab1:
+            st.markdown(f"<div class='metric-card'>{report}</div>", unsafe_allow_html=True)
+            t1, t2, t3 = st.columns(3)
+            t1.download_button("⬇ Download Report", report, file_name=f"{company}_report.md", use_container_width=True)
+            t2.button("📋 Copy Report", use_container_width=True)
+            t3.button("📤 Export PDF", use_container_width=True)
 
-            st.warning(
-                "No events extracted."
-            )
+        with tab2:
+            st.subheader("📰 Latest Market News")
+            st.markdown("### 🔍 DDGS News")
+            with st.container(border=True): st.write(ddgs_news)
+            st.markdown("### 📰 RSS News")
+            with st.container(border=True): st.write(rss_news)
 
-        else:
+        with tab3:
+            st.subheader("📋 Extracted Business Events")
+            if not events:
+                st.info("No events extracted.")
+            else:
+                for event in events:
+                    impact = event.get("impact", "Neutral")
+                    color = "#00C853" if impact.lower() == "positive" else "#F44336" if impact.lower() == "negative" else "#2196F3"
+                    st.markdown(f"""
+                    <div style="padding:15px; margin-bottom:15px; border-left:6px solid {color}; background:#161B22; border-radius:10px;">
+                        <h4>{event.get('title', 'Unknown Title')}</h4>
+                        <b>Category:</b> {event.get('category', '-')} <br>
+                        <b>Impact:</b> {impact}
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            for event in events:
+        with tab4:
+            r1, r2 = st.columns(2)
+            with r1:
+                st.subheader("⚠ Risk Assessment")
+                with st.container(border=True): st.markdown(risk)
+            with r2:
+                st.subheader("😊 Market Sentiment")
+                with st.container(border=True): st.markdown(sentiment)
 
-                impact = event.get(
-                    "impact",
-                    "Unknown"
-                )
+        st.divider()
 
-                title = event.get(
-                    "title",
-                    "Unknown"
-                )
+        # Timeline & System Stats
+        st.markdown("<div class='section-title'>⚙ Agent Execution Timeline</div>", unsafe_allow_html=True)
+        for step in ["🧠 Supervisor Agent", "🔍 DDGS Search", "📰 RSS Parser", "🔗 News Aggregator", "📊 Event Extraction", "😊 Sentiment Analysis", "⚠ Risk Analysis", "🤖 ML Prediction", "📝 Report Generation"]:
+            st.success(f"✔ {step}")
 
-                category = event.get(
-                    "category",
-                    "Unknown"
-                )
+        st.divider()
+        st.markdown("<div class='section-title'>📊 System Summary</div>", unsafe_allow_html=True)
+        sum1, sum2 = st.columns(2)
+        sum1.info(f"### Target\n{company}\n### Data Points\n{len(events)} Events Extracted\n### News Pipelines\nRSS + DDGS")
+        sum2.info("### ML Model\nLightGBM\n### Intelligence\nGemini\n### Agent Framework\nLangGraph")
 
-                with st.container():
+        with st.expander("🛠 View Raw Agent Outputs", expanded=False):
+            for key, value in result.items():
+                st.markdown(f"### {key}")
+                if isinstance(value, (dict, list)):
+                    st.json(value)
+                else:
+                    st.write(value)
+                st.divider()
 
-                    if impact.lower() == "positive":
+# ===========================================
+# MAIN EXECUTION
+# ===========================================
+def main():
+    load_css()
+    
+    # Initialize your LangGraph workflow
+    graph = build_graph()
 
-                        st.success(
-                            f"""
-                            **{title}**
+    st.sidebar.title("📈 Financial Intelligence")
+    st.sidebar.markdown("---")
+    
+    # Using a selectbox is slightly cleaner than radio for navigation
+    page = st.sidebar.selectbox("Navigation", ["🏠 Dashboard", "🏢 Company Analysis", "⚙ Workflow Diagnostics"])
+    
+    st.sidebar.markdown("---")
+    st.sidebar.info("### Stack Architecture\n✅ LangGraph\n✅ Gemini\n✅ DuckDuckGo\n✅ RSS Feeds\n✅ Yahoo Finance\n✅ Streamlit")
+    st.sidebar.markdown("---")
+    st.sidebar.success("System Status : Online")
 
-                            Category: {category}
+    # Routing
+    if page == "🏠 Dashboard":
+        render_dashboard()
+    elif page == "🏢 Company Analysis":
+        render_company_analysis(graph)
+    elif page == "⚙ Workflow Diagnostics":
+        st.title("⚙ Workflow Diagnostics")
+        st.info("Agent states and intermediate data objects will surface here during execution. Run an analysis in the 'Company Analysis' tab first.")
 
-                            Impact: {impact}
-                            """
-                        )
-
-                    elif impact.lower() == "negative":
-
-                        st.error(
-                            f"""
-                            **{title}**
-
-                            Category: {category}
-
-                            Impact: {impact}
-                            """
-                        )
-
-                    else:
-
-                        st.info(
-                            f"""
-                            **{title}**
-
-                            Category: {category}
-
-                            Impact: {impact}
-                            """
-                        )
-
-    # =====================================================
-    # RISK
-    # =====================================================
-
-    with tab4:
-
-        st.subheader(
-            "Risk Assessment"
-        )
-
-        st.markdown(
-            risk_analysis
-        )
-
-    # =====================================================
-    # SENTIMENT
-    # =====================================================
-
-    with tab5:
-
-        st.subheader(
-            "Sentiment Analysis"
-        )
-
-        st.markdown(
-            sentiment
-        )
-
-    # =====================================================
-    # AGENTS
-    # =====================================================
-
-    with tab6:
-
-        with st.expander(
-            "🔍 DDGS Agent"
-        ):
-            st.write(ddgs_news)
-
-        with st.expander(
-            "📰 RSS Agent"
-        ):
-            st.write(rss_news)
-
-        with st.expander(
-            "🧹 Filter Agent"
-        ):
-            st.write(filtered_news)
-
-        with st.expander(
-            "📊 Event Extraction Agent"
-        ):
-            st.json(events)
-
-        with st.expander(
-            "⚠️ Risk Agent"
-        ):
-            st.write(risk_analysis)
-
-        with st.expander(
-            "😊 Sentiment Agent"
-        ):
-            st.write(sentiment)
-
-        with st.expander(
-            "📝 Report Agent"
-        ):
-            st.write(report)
-
-        with st.expander(
-            "🗂 Complete State"
-        ):
-            st.json(result)
-
+if __name__ == "__main__":
+    main()
